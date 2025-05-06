@@ -42,13 +42,15 @@ public class CloudFieldManager {
 
             // Random cluster position in a circular range
             double angle = random.nextDouble() * 2 * Math.PI;
-            double distance = random.nextDouble() * Minecraft.getInstance().options.getEffectiveRenderDistance() * 16;
+            double distance = 100 + random.nextDouble() * Minecraft.getInstance().options.getEffectiveRenderDistance() * 16;
+
 
             float x = (float) (center.x + Math.cos(angle) * distance);
             float z = (float) (center.z + Math.sin(angle) * distance);
             float y = 150f + (random.nextFloat() - 0.5f) * 10f; // mild vertical jitter
 
-            List<Cloud> cluster = CloudCluster.generateCumulus(x, y, z, CUBES_PER_CLUSTER, CLUSTER_RADIUS, 5f, CLUSTER_RADIUS);
+            List<Cloud> cluster = CloudCluster.generateCumulus(x, y, z);
+
 
             for (Cloud c : cluster) {
                 if (cloudCount >= MAX_CLOUD_CUBES) break;

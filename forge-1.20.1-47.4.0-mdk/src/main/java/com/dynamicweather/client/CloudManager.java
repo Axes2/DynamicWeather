@@ -26,9 +26,6 @@ public class CloudManager {
     }
 
 
-
-
-
     public static void initializeStaticGrid() {
         if (!clouds.isEmpty()) return; // Don't duplicate if already initialized
 

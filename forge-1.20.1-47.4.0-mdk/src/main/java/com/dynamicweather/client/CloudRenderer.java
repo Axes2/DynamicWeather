@@ -27,13 +27,14 @@ public class CloudRenderer {
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
 
-        CloudFieldManager.MAX_CLOUD_CUBES = 200;
+        CloudFieldManager.MAX_CLOUD_CUBES = 800;
 
         CloudFieldManager.updateCloudsIfNeeded();
 
 
         if (!CloudManager.isGenerated()) {
-            List<Cloud> cumulus = CloudCluster.generateCumulus(0, 150, 0, 80, 15f, 5f, 15f);
+            List<Cloud> cumulus = CloudCluster.generateCumulus(0, 130, 0);
+
             cumulus.forEach(CloudManager::addCloud);
             CloudManager.setGenerated(true);
         }
