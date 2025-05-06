@@ -14,6 +14,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import com.dynamicweather.client.CloudManager;
+
+import java.util.List;
 
 @Mod.EventBusSubscriber(modid = "dynamicweather", value = Dist.CLIENT)
 public class CloudRenderer {
@@ -24,30 +27,41 @@ public class CloudRenderer {
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
 
+        CloudFieldManager.MAX_CLOUD_CUBES = 200;
+
+        CloudFieldManager.updateCloudsIfNeeded();
+
+
+        if (!CloudManager.isGenerated()) {
+            List<Cloud> cumulus = CloudCluster.generateCumulus(0, 150, 0, 80, 15f, 5f, 15f);
+            cumulus.forEach(CloudManager::addCloud);
+            CloudManager.setGenerated(true);
+        }
+
+
+
+
         Minecraft mc = Minecraft.getInstance();
         Camera camera = mc.gameRenderer.getMainCamera();
-
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
         VertexConsumer builder = buffer.getBuffer(RenderType.entityTranslucent(CLOUD_TEXTURE));
 
-        // Get matrix stack
-
-
-        // Align to world space
         poseStack.pushPose();
         poseStack.translate(-camera.getPosition().x, -camera.getPosition().y, -camera.getPosition().z);
 
         PoseStack.Pose pose = poseStack.last();
         Matrix4f matrix = pose.pose();
         Matrix3f normal = pose.normal();
-        // Draw cube at a fixed location
 
-        renderCube(builder, matrix, normal, 100f, 150f, 100f, 10f);
+        for (Cloud cloud : CloudManager.clouds) {
+            renderCube(builder, matrix, normal, cloud.x, cloud.y, cloud.z, cloud.size);
+        }
 
         poseStack.popPose();
         buffer.endBatch();
     }
+
 
     private static void renderCube(VertexConsumer builder, Matrix4f matrix, Matrix3f normal, float x, float y, float z, float size) {
         float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
