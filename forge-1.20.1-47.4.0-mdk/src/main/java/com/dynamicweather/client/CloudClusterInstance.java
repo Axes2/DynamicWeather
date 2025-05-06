@@ -3,6 +3,7 @@ package com.dynamicweather.client;
 import java.util.List;
 
 public class CloudClusterInstance {
+
     private final List<Cloud> clouds;
     private final float baseX, baseY, baseZ;
     private float offsetX = 0f;
@@ -23,6 +24,11 @@ public class CloudClusterInstance {
     public List<Cloud> getClouds() {
         return clouds;
     }
+
+    public int getAge() {
+        return age;
+    }
+
 
     public float getBaseX() {
         return baseX;
@@ -66,7 +72,7 @@ public class CloudClusterInstance {
     }
 
     public float getOpacity() {
-        float fadeTime = 120f; // ticks to fade in/out
+        float fadeTime = 120f; // smoother fade in/out
         if (age < fadeTime) {
             return age / fadeTime;
         } else if (age > maxLifetime - fadeTime) {
@@ -74,5 +80,14 @@ public class CloudClusterInstance {
         } else {
             return 1f;
         }
+    }
+
+    public static CloudClusterInstance generateClusterAt(float x, float y, float z) {
+        List<Cloud> puff = CloudCluster.generateCumulus(0, 0, 0);
+        float angleOffset = (float) (Math.random() * 10f - 5f);
+        CloudClusterInstance instance = new CloudClusterInstance(puff, angleOffset, x, y, z);
+        instance.setLifetime(CloudFieldManager.computeClusterLifetime());
+        puff.forEach(CloudManager::addCloud);
+        return instance;
     }
 }

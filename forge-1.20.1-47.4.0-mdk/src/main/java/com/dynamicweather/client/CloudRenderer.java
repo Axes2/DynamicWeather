@@ -15,6 +15,8 @@ import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
+import java.util.List;
+
 @Mod.EventBusSubscriber(modid = "dynamicweather", value = Dist.CLIENT)
 public class CloudRenderer {
 
@@ -40,7 +42,8 @@ public class CloudRenderer {
         Matrix4f matrix = pose.pose();
         Matrix3f normal = pose.normal();
 
-        for (CloudClusterInstance cluster : CloudFieldManager.getClusters()) {
+        for (CloudClusterInstance cluster : List.copyOf(CloudFieldManager.getClusters())) {
+
             float baseX = cluster.getBaseX() + cluster.getOffsetX();
             float baseY = cluster.getBaseY();
             float baseZ = cluster.getBaseZ() + cluster.getOffsetZ();
