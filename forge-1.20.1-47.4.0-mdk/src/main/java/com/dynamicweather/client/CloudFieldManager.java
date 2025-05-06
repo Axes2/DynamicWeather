@@ -50,16 +50,17 @@ public class CloudFieldManager {
             double angle = random.nextDouble() * 2 * Math.PI;
             double distance = 100 + random.nextDouble() * mc.options.getEffectiveRenderDistance() * 16;
 
-            float x = (float) (center.x + Math.cos(angle) * distance);
-            float z = (float) (center.z + Math.sin(angle) * distance);
-            float y = 150f + (random.nextFloat() - 0.5f) * 10f;
+            float baseX = (float) (center.x + Math.cos(angle) * distance);
+            float baseZ = (float) (center.z + Math.sin(angle) * distance);
+            float baseY = 150f + (random.nextFloat() - 0.5f) * 10f;
 
-            List<Cloud> puff = CloudCluster.generateCumulus(x, y, z);
+            List<Cloud> puff = CloudCluster.generateCumulus(0, 0, 0); // Localized to (0,0,0)
             float offsetAngle = random.nextFloat() * 10f - 5f; // +/-5 degrees variation
 
-            CloudClusterInstance instance = new CloudClusterInstance(puff, offsetAngle);
+            CloudClusterInstance instance = new CloudClusterInstance(puff, offsetAngle, baseX, baseY, baseZ);
             clusters.add(instance);
-            puff.forEach(CloudManager::addCloud);
+
+            instance.getClouds().forEach(CloudManager::addCloud);
 
             cloudCount += puff.size();
         }
@@ -69,5 +70,9 @@ public class CloudFieldManager {
         for (CloudClusterInstance cluster : clusters) {
             cluster.update(windSpeed, 1f, globalWindDirection.x, globalWindDirection.y); // 1 tick
         }
+    }
+
+    public static List<CloudClusterInstance> getClusters() {
+        return clusters;
     }
 }

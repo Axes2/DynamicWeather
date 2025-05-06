@@ -14,7 +14,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import com.dynamicweather.client.CloudManager;
 
 import java.util.List;
 
@@ -27,20 +26,7 @@ public class CloudRenderer {
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
 
-        CloudFieldManager.MAX_CLOUD_CUBES = 800;
-
         CloudFieldManager.updateCloudsIfNeeded();
-
-
-        if (!CloudManager.isGenerated()) {
-            List<Cloud> cumulus = CloudCluster.generateCumulus(0, 130, 0);
-
-            cumulus.forEach(CloudManager::addCloud);
-            CloudManager.setGenerated(true);
-        }
-
-
-
 
         Minecraft mc = Minecraft.getInstance();
         Camera camera = mc.gameRenderer.getMainCamera();
@@ -55,14 +41,23 @@ public class CloudRenderer {
         Matrix4f matrix = pose.pose();
         Matrix3f normal = pose.normal();
 
-        for (Cloud cloud : CloudManager.clouds) {
-            renderCube(builder, matrix, normal, cloud.x, cloud.y, cloud.z, cloud.size);
+        for (CloudClusterInstance cluster : CloudFieldManager.getClusters()) {
+            float baseX = cluster.getBaseX() + cluster.getOffsetX();
+            float baseY = cluster.getBaseY();
+            float baseZ = cluster.getBaseZ() + cluster.getOffsetZ();
+
+            for (Cloud cloud : cluster.getClouds()) {
+                float worldX = baseX + cloud.x;
+                float worldY = baseY + cloud.y;
+                float worldZ = baseZ + cloud.z;
+
+                renderCube(builder, matrix, normal, worldX, worldY, worldZ, cloud.size);
+            }
         }
 
         poseStack.popPose();
         buffer.endBatch();
     }
-
 
     private static void renderCube(VertexConsumer builder, Matrix4f matrix, Matrix3f normal, float x, float y, float z, float size) {
         float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
