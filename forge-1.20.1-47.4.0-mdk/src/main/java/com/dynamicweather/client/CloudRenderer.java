@@ -15,8 +15,6 @@ import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
-import java.util.List;
-
 @Mod.EventBusSubscriber(modid = "dynamicweather", value = Dist.CLIENT)
 public class CloudRenderer {
 
@@ -26,7 +24,8 @@ public class CloudRenderer {
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
 
-        CloudFieldManager.updateCloudsIfNeeded();
+        // Adjusted cloud management call with spawn and count control
+        CloudFieldManager.updateCloudsIfNeeded(); // Adjust spawn count and lifetime here
 
         Minecraft mc = Minecraft.getInstance();
         Camera camera = mc.gameRenderer.getMainCamera();
@@ -45,13 +44,14 @@ public class CloudRenderer {
             float baseX = cluster.getBaseX() + cluster.getOffsetX();
             float baseY = cluster.getBaseY();
             float baseZ = cluster.getBaseZ() + cluster.getOffsetZ();
+            float alpha = cluster.getOpacity();
 
             for (Cloud cloud : cluster.getClouds()) {
                 float worldX = baseX + cloud.x;
                 float worldY = baseY + cloud.y;
                 float worldZ = baseZ + cloud.z;
 
-                renderCube(builder, matrix, normal, worldX, worldY, worldZ, cloud.size);
+                renderCube(builder, matrix, normal, worldX, worldY, worldZ, cloud.size, alpha);
             }
         }
 
@@ -59,8 +59,8 @@ public class CloudRenderer {
         buffer.endBatch();
     }
 
-    private static void renderCube(VertexConsumer builder, Matrix4f matrix, Matrix3f normal, float x, float y, float z, float size) {
-        float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
+    private static void renderCube(VertexConsumer builder, Matrix4f matrix, Matrix3f normal, float x, float y, float z, float size, float alpha) {
+        float r = 1.0f, g = 1.0f, b = 1.0f, a = alpha;
         float x2 = x + size;
         float y2 = y + size;
         float z2 = z + size;

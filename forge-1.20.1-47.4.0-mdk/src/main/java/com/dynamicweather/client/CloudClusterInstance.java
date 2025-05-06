@@ -9,6 +9,9 @@ public class CloudClusterInstance {
     private float offsetZ = 0f;
     private final float angleOffsetDeg;
 
+    private int age = 0;
+    private int maxLifetime = Integer.MAX_VALUE;
+
     public CloudClusterInstance(List<Cloud> clouds, float angleOffsetDeg, float baseX, float baseY, float baseZ) {
         this.clouds = clouds;
         this.angleOffsetDeg = angleOffsetDeg;
@@ -48,5 +51,28 @@ public class CloudClusterInstance {
 
         offsetX += dx * windSpeed * deltaTicks;
         offsetZ += dz * windSpeed * deltaTicks;
+    }
+
+    public void setLifetime(int ticks) {
+        this.maxLifetime = ticks;
+    }
+
+    public void tickLifetime() {
+        this.age++;
+    }
+
+    public boolean isExpired() {
+        return age >= maxLifetime;
+    }
+
+    public float getOpacity() {
+        float fadeTime = 120f; // ticks to fade in/out
+        if (age < fadeTime) {
+            return age / fadeTime;
+        } else if (age > maxLifetime - fadeTime) {
+            return Math.max(0f, (maxLifetime - age) / fadeTime);
+        } else {
+            return 1f;
+        }
     }
 }
