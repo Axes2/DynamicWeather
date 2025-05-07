@@ -14,6 +14,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import net.minecraft.world.phys.Vec3;
+
 
 import java.util.List;
 
@@ -42,13 +44,28 @@ public class CloudRenderer {
         Matrix4f matrix = pose.pose();
         Matrix3f normal = pose.normal();
 
-        for (CloudClusterInstance cluster : List.copyOf(CloudFieldManager.getClusters())) {
+        Vec3 cameraPos = camera.getPosition();
+        Vec3 lookVec = new Vec3(camera.getLookVector());
 
+
+        for (CloudClusterInstance cluster : List.copyOf(CloudFieldManager.getClusters())) {
             float baseX = cluster.getBaseX() + cluster.getOffsetX();
             float baseY = cluster.getBaseY();
             float baseZ = cluster.getBaseZ() + cluster.getOffsetZ();
             float alpha = cluster.getOpacity();
 
+            // Skip clusters that are too far or out of view
+            Vec3 toCluster = new Vec3(baseX, baseY, baseZ).subtract(cameraPos);
+            double distance = toCluster.length();
+
+            // Distance check (add 20% buffer)
+            if (distance > mc.options.renderDistance().get() * 16f * 1.2f) continue;
+
+            // Angle check (70 degrees cone)
+            double angleCos = lookVec.dot(toCluster.normalize());
+            if (angleCos < Math.cos(Math.toRadians(90))) continue;
+
+            // Draw this cluster
             for (Cloud cloud : cluster.getClouds()) {
                 float worldX = baseX + cloud.x;
                 float worldY = baseY + cloud.y;
@@ -57,6 +74,7 @@ public class CloudRenderer {
                 renderCube(builder, matrix, normal, worldX, worldY, worldZ, cloud.size, alpha);
             }
         }
+
 
         poseStack.popPose();
         buffer.endBatch();
