@@ -28,49 +28,41 @@ public class SkyCellSpawner {
 
 
     public static void update() {
+        spawnTimer++;
+        if (spawnTimer < SPAWN_INTERVAL) return;
+        spawnTimer = 0;
+
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return;
 
         int px = (int) player.getX();
         int pz = (int) player.getZ();
 
-        int cellX = Math.floorDiv(px, CELL_SIZE);
-        int cellZ = Math.floorDiv(pz, CELL_SIZE);
+        for (int i = 0; i < SPAWN_ATTEMPTS_PER_TICK; i++) {
+            // Random cell offset from player's current position
+            int dx = random.nextInt(SCAN_RADIUS * 2 + 1) - SCAN_RADIUS;
+            int dz = random.nextInt(SCAN_RADIUS * 2 + 1) - SCAN_RADIUS;
 
-        for (int dx = -SCAN_RADIUS; dx <= SCAN_RADIUS; dx++) {
-            for (int dz = -SCAN_RADIUS; dz <= SCAN_RADIUS; dz++) {
-                int cx = cellX + dx;
-                int cz = cellZ + dz;
-                long key = cellKey(cx, cz);
+            int cx = Math.floorDiv(px, CELL_SIZE) + dx;
+            int cz = Math.floorDiv(pz, CELL_SIZE) + dz;
+            long key = cellKey(cx, cz);
 
-                // ❌ Already visited? Skip
-                if (visitedCells.contains(key)) continue;
+            if (visitedCells.contains(key)) continue;
+            if (random.nextFloat() > getSpawnChance()) continue;
 
-                // ❌ Failed spawn roll? Skip but leave cell open
-                if (random.nextFloat() > getSpawnChance()) continue;
+            visitedCells.add(key);
 
-                // ✅ Proceed with cloud spawn
-                visitedCells.add(key);
+            CloudType type = CloudFieldManager.selectCloudTypeForCurrentCover(random);
+            float worldX = cx * CELL_SIZE + randomOffset();
+            float worldZ = cz * CELL_SIZE + randomOffset();
+            float worldY = determineCloudHeight(type);
 
-                CloudType type = CloudFieldManager.selectCloudTypeForCurrentCover(random);
-                float worldX = cx * CELL_SIZE + randomOffset();
-                float worldZ = cz * CELL_SIZE + randomOffset();
-                float worldY;
-
-                if (type == CloudType.STRATUS) {
-                    worldY = 145f + random.nextFloat() * 20f;
-                } else if (type == CloudType.CUMULONIMBUS) {
-                    worldY = 120f + random.nextFloat() * 40f;
-                } else {
-                    worldY = 130f + random.nextFloat() * 40f;
-                }
-
-                CloudClusterInstance cluster = CloudClusterInstance.generateClusterAt(type, worldX, worldY, worldZ);
-                cluster.setLifetime(CloudFieldManager.computeClusterLifetime());
-                CloudFieldManager.addCluster(cluster);
-            }
+            CloudClusterInstance cluster = CloudClusterInstance.generateClusterAt(type, worldX, worldY, worldZ);
+            cluster.setLifetime(CloudFieldManager.computeClusterLifetime());
+            CloudFieldManager.addCluster(cluster);
         }
     }
+
 
 
     private static long cellKey(int x, int z) {
@@ -98,5 +90,23 @@ public class SkyCellSpawner {
         long key = (((long) cx) << 32) | (cz & 0xFFFFFFFFL);
         visitedCells.remove(key);
     }
+    private static float determineCloudHeight(CloudType type) {
+        float baseY;
+        switch (type) {
+            case STRATUS:
+                baseY = 145f + random.nextFloat() * 20f;
+                break;
+            case CUMULONIMBUS:
+                baseY = 120f + random.nextFloat() * 40f;
+                break;
+            case CUMULUS:
+            default:
+                baseY = 130f + random.nextFloat() * 40f;
+                break;
+        }
+        return baseY;
+    }
+
+
 
 }
