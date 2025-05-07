@@ -21,6 +21,11 @@ public class CloudClusterInstance {
         this.baseZ = baseZ;
     }
 
+    public void fadeOutNow() {
+        this.age = getLifetime() - 20; // Finish in ~1 second (20 ticks)
+    }
+
+
     public List<Cloud> getClouds() {
         return clouds;
     }
@@ -62,6 +67,11 @@ public class CloudClusterInstance {
     public void setLifetime(int ticks) {
         this.maxLifetime = ticks;
     }
+
+    public int getLifetime() {
+        return this.maxLifetime;
+    }
+
 
     public void tickLifetime() {
         this.age++;

@@ -27,8 +27,33 @@ public class CloudFieldManager {
     private static int tickCounter = 0;
     private static final int SPAWN_INTERVAL_TICKS = 40; // Every 2 seconds at 20 TPS
 
+    private static CloudCover currentCover = CloudCover.PARTLY_CLOUDY;
+
+    public static CloudCover getCloudCover() {
+        return currentCover;
+    }
+
+    public static void clearAllClouds() {
+        clusters.clear();
+    }
+
+
+    public static void setCloudCover(CloudCover cover) {
+        if (cover.ordinal() > currentCover.ordinal()) {
+            SkyCellSpawner.clear();  // allow denser fill
+        } else if (cover == CloudCover.CLEAR) {
+            clearAllClouds();  // 🔧 remove lingering clouds
+        }
+        currentCover = cover;
+    }
+
+
+
+
+
     public static void clear() {
         clusters.clear();
+        SkyCellSpawner.clear(); // ← reset world grid state
     }
 
     public static void setWindSpeed(float speed) {
@@ -41,21 +66,27 @@ public class CloudFieldManager {
         return blocks * blocks;
     }
 
-    private static void bootstrapSkyPopulation(LocalPlayer player, int numClusters) {
-        int renderDistBlocks = Minecraft.getInstance().options.renderDistance().get() * 16;
-
-        for (int i = 0; i < numClusters; i++) {
-            double angle = random.nextDouble() * 2 * Math.PI;
-            double radius = random.nextDouble() * renderDistBlocks * 0.9;
-
-            float x = (float) (player.getX() + Math.cos(angle) * radius);
-            float z = (float) (player.getZ() + Math.sin(angle) * radius);
-            float y = (float) player.getY() + 60f + random.nextFloat() * 20f;
-
-            CloudClusterInstance cluster = CloudClusterInstance.generateClusterAt(x, y, z);
-            clusters.add(cluster);
-        }
+    public static void addCluster(CloudClusterInstance cluster) {
+        clusters.add(cluster);
+        cluster.getClouds().forEach(CloudManager::addCloud);
     }
+
+
+//    private static void bootstrapSkyPopulation(LocalPlayer player, int numClusters) {
+//        int renderDistBlocks = Minecraft.getInstance().options.renderDistance().get() * 16;
+//
+//        for (int i = 0; i < numClusters; i++) {
+//            double angle = random.nextDouble() * 2 * Math.PI;
+//            double radius = random.nextDouble() * renderDistBlocks * 0.9;
+//
+//            float x = (float) (player.getX() + Math.cos(angle) * radius);
+//            float z = (float) (player.getZ() + Math.sin(angle) * radius);
+//            float y = (float) player.getY() + 60f + random.nextFloat() * 20f;
+//
+//            CloudClusterInstance cluster = CloudClusterInstance.generateClusterAt(x, y, z);
+//            clusters.add(cluster);
+//        }
+//    }
 
     public static void updateCloudsIfNeeded() {
         LocalPlayer player = mc.player;
@@ -63,17 +94,19 @@ public class CloudFieldManager {
 
         tickCounter++;
 
-        if (!hasBootstrappedSky) {
-            bootstrapSkyPopulation(player, 55);
-            hasBootstrappedSky = true;
-        }
+        SkyCellSpawner.update();
+
+//        if (!hasBootstrappedSky) {
+//            bootstrapSkyPopulation(player, 55);
+//            hasBootstrappedSky = true;
+//        }
 
         updateClusterOffsets();
         removeExpiredClusters();
 
-        if (tickCounter % SPAWN_INTERVAL_TICKS == 0 && countTotalClouds() < MAX_CLOUD_CUBES) {
-            trySpawnClusterNearPlayer();
-        }
+//        if (tickCounter % SPAWN_INTERVAL_TICKS == 0 && countTotalClouds() < MAX_CLOUD_CUBES) {
+//            trySpawnClusterNearPlayer();
+//        }
     }
 
     public static int computeClusterLifetime() {

@@ -3,6 +3,7 @@ package com.dynamicweather.client;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -93,6 +94,29 @@ public class CloudDebugCommands {
                     return 1;
                 })
         );
+        dispatcher.register(Commands.literal("cloudcover")
+                .then(Commands.argument("type", StringArgumentType.word())
+                        .suggests((ctx, builder) -> {
+                            for (CloudCover cover : CloudCover.values()) {
+                                builder.suggest(cover.name().toLowerCase());
+                            }
+                            return builder.buildFuture();
+                        })
+                        .executes(ctx -> {
+                            String input = StringArgumentType.getString(ctx, "type").toUpperCase();
+                            try {
+                                CloudCover cover = CloudCover.valueOf(input);
+                                CloudFieldManager.setCloudCover(cover);
+                                ctx.getSource().sendSuccess(() ->
+                                        Component.literal("Set cloud cover to " + cover.name().toLowerCase()), false);
+                                return 1;
+                            } catch (IllegalArgumentException e) {
+                                ctx.getSource().sendFailure(Component.literal("Invalid cover type: " + input));
+                                return 0;
+                            }
+                        }))
+        );
+
 
     }
 }
