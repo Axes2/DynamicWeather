@@ -11,8 +11,21 @@ import java.util.Set;
 public class SkyCellSpawner {
     private static final Set<Long> visitedCells = new HashSet<>();
     private static final Random random = new Random();
-    private static final int CELL_SIZE = 50;
+    public static final int CELL_SIZE = 50;
     private static final int SCAN_RADIUS = 4; // Number of cells in each direction from player
+
+    public static CloudType selectCloudTypeForCurrentCover(Random rand) {
+        return CloudFieldManager.selectCloudTypeForCurrentCover(random);
+
+    }
+    private static final int SPAWN_INTERVAL = 200; // ticks (about 10 seconds)
+    private static int spawnTimer = 0;
+    private static final int SPAWN_ATTEMPTS_PER_TICK = 3; // try a few cells per interval
+
+
+
+
+
 
     public static void update() {
         LocalPlayer player = Minecraft.getInstance().player;
@@ -30,24 +43,35 @@ public class SkyCellSpawner {
                 int cz = cellZ + dz;
                 long key = cellKey(cx, cz);
 
-                if (!visitedCells.contains(key)) {
-                    if (random.nextFloat() < getSpawnChance()) {
-                        visitedCells.add(key);  // ✅ Only mark it if spawn happens
+                // ❌ Already visited? Skip
+                if (visitedCells.contains(key)) continue;
 
-                        float worldX = cx * CELL_SIZE + randomOffset();
-                        float worldZ = cz * CELL_SIZE + randomOffset();
-                        float worldY = 130f + random.nextFloat() * 40f;
+                // ❌ Failed spawn roll? Skip but leave cell open
+                if (random.nextFloat() > getSpawnChance()) continue;
 
-                        CloudClusterInstance cluster = CloudClusterInstance.generateClusterAt(worldX, worldY, worldZ);
-                        cluster.setLifetime(CloudFieldManager.computeClusterLifetime());
-                        CloudFieldManager.addCluster(cluster);
-                    }
+                // ✅ Proceed with cloud spawn
+                visitedCells.add(key);
+
+                CloudType type = CloudFieldManager.selectCloudTypeForCurrentCover(random);
+                float worldX = cx * CELL_SIZE + randomOffset();
+                float worldZ = cz * CELL_SIZE + randomOffset();
+                float worldY;
+
+                if (type == CloudType.STRATUS) {
+                    worldY = 145f + random.nextFloat() * 20f;
+                } else if (type == CloudType.CUMULONIMBUS) {
+                    worldY = 120f + random.nextFloat() * 40f;
+                } else {
+                    worldY = 130f + random.nextFloat() * 40f;
                 }
 
-
+                CloudClusterInstance cluster = CloudClusterInstance.generateClusterAt(type, worldX, worldY, worldZ);
+                cluster.setLifetime(CloudFieldManager.computeClusterLifetime());
+                CloudFieldManager.addCluster(cluster);
             }
         }
     }
+
 
     private static long cellKey(int x, int z) {
         return (((long) x) << 32) | (z & 0xFFFFFFFFL);
@@ -70,4 +94,9 @@ public class SkyCellSpawner {
     public static void clear() {
         visitedCells.clear();
     }
+    public static void unvisitCell(int cx, int cz) {
+        long key = (((long) cx) << 32) | (cz & 0xFFFFFFFFL);
+        visitedCells.remove(key);
+    }
+
 }

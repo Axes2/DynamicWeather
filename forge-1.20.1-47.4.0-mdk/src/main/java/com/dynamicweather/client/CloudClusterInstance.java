@@ -10,15 +10,28 @@ public class CloudClusterInstance {
     private float offsetZ = 0f;
     private final float angleOffsetDeg;
 
+    private final CloudType type;
+
+    public CloudType getType() {
+        return type;
+    }
+
+
+
+
     private int age = 0;
     private int maxLifetime = Integer.MAX_VALUE;
 
-    public CloudClusterInstance(List<Cloud> clouds, float angleOffsetDeg, float baseX, float baseY, float baseZ) {
+    public CloudClusterInstance(CloudType type, List<Cloud> clouds, float angleOffsetDeg, float baseX, float baseY, float baseZ)
+    {
+
         this.clouds = clouds;
         this.angleOffsetDeg = angleOffsetDeg;
         this.baseX = baseX;
         this.baseY = baseY;
         this.baseZ = baseZ;
+        this.type = type;
+
     }
 
     public void fadeOutNow() {
@@ -92,12 +105,13 @@ public class CloudClusterInstance {
         }
     }
 
-    public static CloudClusterInstance generateClusterAt(float x, float y, float z) {
-        List<Cloud> puff = CloudCluster.generateCumulus(0, 0, 0);
+    public static CloudClusterInstance generateClusterAt(CloudType type, float x, float y, float z) {
+        List<Cloud> puff = CloudCluster.generateCluster(type, 0, 0, 0);
         float angleOffset = (float) (Math.random() * 10f - 5f);
-        CloudClusterInstance instance = new CloudClusterInstance(puff, angleOffset, x, y, z);
+        CloudClusterInstance instance = new CloudClusterInstance(type, puff, angleOffset, x, y, z);
         instance.setLifetime(CloudFieldManager.computeClusterLifetime());
-        puff.forEach(CloudManager::addCloud);
+
         return instance;
     }
+
 }
