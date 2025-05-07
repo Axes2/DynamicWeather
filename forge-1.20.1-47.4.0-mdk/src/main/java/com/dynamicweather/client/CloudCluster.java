@@ -44,11 +44,11 @@ public class CloudCluster {
                 falloff = 0.8f;
                 break;
             case CUMULONIMBUS:
-                spreadX = 6f;
-                spreadY = 12f;
-                spreadZ = 6f;
+                spreadX = 9f;
+                spreadY = 5f;
+                spreadZ = 9f;
                 minSize = 3.5f;
-                maxSize = 9f;
+                maxSize = 12f;
                 falloff = 1.8f;
                 break;
             case CUMULUS:
@@ -69,7 +69,7 @@ public class CloudCluster {
                 numCubes = 100;
                 break;
             case CUMULONIMBUS:
-                numCubes = 60;
+                numCubes = 12;
                 break;
             case CUMULUS:
             default:

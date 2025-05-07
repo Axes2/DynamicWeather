@@ -97,7 +97,7 @@ public class SkyCellSpawner {
                 baseY = 145f + random.nextFloat() * 20f;
                 break;
             case CUMULONIMBUS:
-                baseY = 120f + random.nextFloat() * 40f;
+                baseY = 140f + random.nextFloat() * 40f;
                 break;
             case CUMULUS:
             default:

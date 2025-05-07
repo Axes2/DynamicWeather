@@ -8,6 +8,8 @@ public class CloudClusterInstance {
     private final float baseX, baseY, baseZ;
     private float offsetX = 0f;
     private float offsetZ = 0f;
+    private float opacity = 1.0f; // default fully opaque
+    private float colorMultiplier = 1.0f; // default: fully white
     private final float angleOffsetDeg;
 
     private final CloudType type;
@@ -15,6 +17,20 @@ public class CloudClusterInstance {
     public CloudType getType() {
         return type;
     }
+
+    public void setColorMultiplier(float value) {
+        this.colorMultiplier = value;
+    }
+
+
+    public float getColorMultiplier() {
+        return this.colorMultiplier;
+    }
+
+    public void setOpacity(float value) {
+        this.opacity = value;
+    }
+
 
 
 
@@ -42,6 +58,18 @@ public class CloudClusterInstance {
     public List<Cloud> getClouds() {
         return clouds;
     }
+
+    private float cloudSize = 6.0f;
+
+    public void setSize(float size) {
+        this.cloudSize = size;
+    }
+
+    public float getSize() {
+        return this.cloudSize;
+    }
+
+
 
     public int getAge() {
         return age;
@@ -89,6 +117,12 @@ public class CloudClusterInstance {
     public void tickLifetime() {
         this.age++;
     }
+
+    public void applyMotion(float dx, float dz) {
+        this.offsetX += dx;
+        this.offsetZ += dz;
+    }
+
 
     public boolean isExpired() {
         return age >= maxLifetime;

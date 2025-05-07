@@ -8,6 +8,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -116,6 +117,31 @@ public class CloudDebugCommands {
                             }
                         }))
         );
+        dispatcher.register(Commands.literal("cloud")
+                .then(Commands.literal("spawnstorm")
+                        .then(Commands.argument("radius", FloatArgumentType.floatArg(10.0f, 200.0f))
+                                .executes(ctx -> {
+                                    ServerPlayer player = ctx.getSource().getPlayer();
+                                    if (player == null) return 0;
+
+                                    float radius = FloatArgumentType.getFloat(ctx, "radius");
+
+                                    StormCell storm = new StormCell(
+                                            player.position().add(0, 20, 0),        // position above player
+                                            new Vec3(0.05f, 0, 0.01f),              // motion vector
+                                            radius,                                 // ⬅ user-defined radius
+                                            1200                                    // lifetime in ticks (60s)
+                                    );
+                                    StormManager.spawnStorm(storm);
+
+                                    ctx.getSource().sendSuccess(() ->
+                                            Component.literal("Spawned storm cell with radius " + radius + "."), false);
+                                    return 1;
+                                })))
+        );
+
+
+
 
 
     }

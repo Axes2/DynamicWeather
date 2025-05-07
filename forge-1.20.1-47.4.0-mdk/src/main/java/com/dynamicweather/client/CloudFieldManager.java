@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector2f;
-
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -19,11 +19,12 @@ public class CloudFieldManager {
     public static float globalWindSpeed = 0.02f;
 
     private static final List<CloudClusterInstance> clusters = new ArrayList<>();
+    private static final List<CloudClusterInstance> pendingClusters = new ArrayList<>();
+
 
     public static int MAX_CLOUD_CUBES = 3000;
     public static int CUBES_PER_CLUSTER = 40;
 
-    private static boolean hasBootstrappedSky = false;
     private static int tickCounter = 0;
     private static final int SPAWN_INTERVAL_TICKS = 40; // Every 2 seconds at 20 TPS
 
@@ -66,8 +67,14 @@ public class CloudFieldManager {
         return blocks * blocks;
     }
 
+    public static void queueCluster(CloudClusterInstance cluster) {
+        pendingClusters.add(cluster);
+    }
+
+
+
     public static void addCluster(CloudClusterInstance cluster) {
-        clusters.add(cluster);
+        CloudFieldManager.queueCluster(cluster);
     }
 
 
@@ -108,9 +115,14 @@ public class CloudFieldManager {
 
         updateClusterOffsets();
         removeExpiredClusters();
+        flushPendingClusters();
+
 
     }
-
+    public static void flushPendingClusters() {
+        clusters.addAll(pendingClusters);
+        pendingClusters.clear();
+    }
     public static int computeClusterLifetime() {
         float speedPerTick = globalWindSpeed + 0.01f; // prevents division by zero
         return (int)(600 / speedPerTick); // Clouds last ~600 ticks at speed 1.0f

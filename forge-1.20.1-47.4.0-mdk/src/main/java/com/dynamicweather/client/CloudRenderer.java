@@ -22,6 +22,7 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = "dynamicweather", value = Dist.CLIENT)
 public class CloudRenderer {
 
+
     private static final ResourceLocation CLOUD_TEXTURE = new ResourceLocation("dynamicweather", "textures/particles/cloud.png");
 
     @SubscribeEvent
@@ -29,6 +30,8 @@ public class CloudRenderer {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
 
         // Adjusted cloud management call with spawn and count control
+        StormManager.tickStorms();
+
         CloudFieldManager.updateCloudsIfNeeded(); // Adjust spawn count and lifetime here
 
         Minecraft mc = Minecraft.getInstance();
@@ -71,7 +74,8 @@ public class CloudRenderer {
                 float worldY = baseY + cloud.y;
                 float worldZ = baseZ + cloud.z;
 
-                renderCube(builder, matrix, normal, worldX, worldY, worldZ, cloud.size, alpha);
+                renderCube(builder, matrix, normal, worldX, worldY, worldZ, cluster.getSize(), alpha, cluster.getColorMultiplier());
+
             }
         }
 
@@ -80,8 +84,8 @@ public class CloudRenderer {
         buffer.endBatch();
     }
 
-    private static void renderCube(VertexConsumer builder, Matrix4f matrix, Matrix3f normal, float x, float y, float z, float size, float alpha) {
-        float r = 1.0f, g = 1.0f, b = 1.0f, a = alpha;
+    private static void renderCube(VertexConsumer builder, Matrix4f matrix, Matrix3f normal, float x, float y, float z, float size, float alpha, float tint) {
+        float r = tint, g = tint, b = tint, a = alpha;
         float x2 = x + size;
         float y2 = y + size;
         float z2 = z + size;
@@ -122,4 +126,5 @@ public class CloudRenderer {
         builder.vertex(matrix, x2, y, z2).color(r, g, b, a).uv(1, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normal, 0, -1, 0).endVertex();
         builder.vertex(matrix, x, y, z2).color(r, g, b, a).uv(0, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normal, 0, -1, 0).endVertex();
     }
+
 }
