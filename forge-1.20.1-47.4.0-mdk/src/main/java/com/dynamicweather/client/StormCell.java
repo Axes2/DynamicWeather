@@ -17,15 +17,72 @@ public class StormCell {
     private final List<CloudClusterInstance> clouds = new ArrayList<>();
 
     private static final Random random = new Random();
+    private final float intensity; // 0.0 to 1.0
 
 
-    public StormCell(Vec3 position, Vec3 motion, float radius, int lifetime) {
+
+    public StormCell(Vec3 position, Vec3 motion, float radius, int lifetime, float intensity) {
         this.position = position;
         this.motion = motion;
         this.radius = radius;
         this.lifetime = lifetime;
-        generateRadialStorm(); // new method
+        this.intensity = intensity;
+        generateRadialStorm();
     }
+
+    public Vec3 getWindVectorAt(Vec3 pos) {
+        Vec3 stormCenter = this.position;
+        Vec3 toTarget = pos.subtract(stormCenter);
+        double dist = toTarget.length();
+
+        if (dist > this.radius) return Vec3.ZERO;
+
+        // Normalize distance
+        double t = dist / radius;
+
+        // Motion-aligned offset — pulls inflow toward the front (storm leading edge)
+        Vec3 frontBias = this.motion.normalize().scale(radius * 0.4);
+        Vec3 skewedCenter = stormCenter.add(frontBias); // inflow focus ahead of actual center
+        Vec3 toSkewed = pos.subtract(skewedCenter);
+        Vec3 inflowDir = toSkewed.normalize().scale(-1); // inward to skewed center
+
+        // Outflow lags behind — apply offset in reverse
+        Vec3 rearBias = this.motion.normalize().scale(radius * 0.4);
+        Vec3 outflowDir = pos.subtract(stormCenter.subtract(rearBias)).normalize();
+
+        // Intensity-based scaling
+        double inflowSpeed = 0.08 * intensity;
+        double updraftSpeed = 0.12 * intensity;
+        double outflowSpeed = 0.06 * intensity;
+
+        if (t > 0.6) {
+            // Inflow zone
+            return inflowDir.add(0, -0.1, 0).normalize().scale(inflowSpeed);
+        } else if (t > 0.3) {
+            // Updraft
+            return new Vec3(0, updraftSpeed, 0);
+        } else {
+            // Outflow, biased behind storm
+            return outflowDir.add(0, -0.1, 0).normalize().scale(outflowSpeed);
+        }
+
+    }
+
+
+
+
+    public Vec3 getPosition() {
+        return this.position;
+    }
+
+    public float getRadius() {
+        return this.radius;
+    }
+    public float getIntensity() {
+        return intensity;
+    }
+
+
 
 
     private void generateCloudLayer(float y, float radius, int count, float alpha, float tint) {
@@ -68,6 +125,7 @@ public class StormCell {
             cloud.tickLifetime(); // ensure fade-out works
         }
         CloudFieldManager.flushPendingClusters();
+
     }
 
     public boolean isExpired() {

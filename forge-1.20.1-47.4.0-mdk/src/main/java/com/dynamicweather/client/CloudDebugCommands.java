@@ -13,6 +13,8 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Vector2f;
+import net.minecraft.commands.arguments.coordinates.Vec3Argument;
+
 
 @Mod.EventBusSubscriber
 public class CloudDebugCommands {
@@ -119,26 +121,45 @@ public class CloudDebugCommands {
         );
         dispatcher.register(Commands.literal("cloud")
                 .then(Commands.literal("spawnstorm")
-                        .then(Commands.argument("radius", FloatArgumentType.floatArg(10.0f, 200.0f))
-                                .executes(ctx -> {
-                                    ServerPlayer player = ctx.getSource().getPlayer();
-                                    if (player == null) return 0;
+                        .then(Commands.argument("radius", FloatArgumentType.floatArg(10.0f, 300.0f))
+                                .then(Commands.argument("position", Vec3Argument.vec3())
+                                        .then(Commands.argument("intensity", FloatArgumentType.floatArg(0.0f, 1.0f))
+                                                .executes(ctx -> {
+                                                    ServerPlayer player = ctx.getSource().getPlayer();
+                                                    if (player == null) return 0;
 
-                                    float radius = FloatArgumentType.getFloat(ctx, "radius");
+                                                    float radius = FloatArgumentType.getFloat(ctx, "radius");
+                                                    Vec3 pos = Vec3Argument.getVec3(ctx, "position");
+                                                    float intensity = FloatArgumentType.getFloat(ctx, "intensity");
 
-                                    StormCell storm = new StormCell(
-                                            player.position().add(0, 20, 0),        // position above player
-                                            new Vec3(0.05f, 0, 0.01f),              // motion vector
-                                            radius,                                 // ⬅ user-defined radius
-                                            1200                                    // lifetime in ticks (60s)
-                                    );
-                                    StormManager.spawnStorm(storm);
+                                                    StormCell storm = new StormCell(
+                                                            pos,                             // ← custom world pos
+                                                            new Vec3(0.05f, 0, 0.01f),       // motion
+                                                            radius,
+                                                            6000,                            // 'lifetime in ticks
+                                                            intensity                        // ⬅ intensity
+                                                    );
+                                                    StormManager.spawnStorm(storm);
 
-                                    ctx.getSource().sendSuccess(() ->
-                                            Component.literal("Spawned storm cell with radius " + radius + "."), false);
-                                    return 1;
-                                })))
+                                                    ctx.getSource().sendSuccess(() ->
+                                                            Component.literal("Spawned storm cell at " + pos + " with radius " + radius + " and intensity " + intensity + "."), false);
+                                                    return 1;
+                                                })
+                                        )
+                                )
+                        )
+                )
         );
+        dispatcher.register(Commands.literal("debugwindstream")
+                .executes(ctx -> {
+                    WindDebugRenderer.toggle();
+                    ctx.getSource().sendSuccess(() ->
+                            Component.literal("Wind stream debug " + (WindDebugRenderer.isEnabled() ? "enabled." : "disabled.")), false);
+                    return 1;
+                })
+        );
+
+
 
 
 

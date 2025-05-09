@@ -97,13 +97,19 @@ public class CloudClusterInstance {
     }
 
     public void update(float windSpeed, float deltaTicks, float globalWindX, float globalWindZ) {
+        // Apply angle offset to wind direction (for slight cloud orientation variation)
         float angleRad = (float) Math.toRadians(angleOffsetDeg);
-        float dx = globalWindX * (float) Math.cos(angleRad) - globalWindZ * (float) Math.sin(angleRad);
-        float dz = globalWindX * (float) Math.sin(angleRad) + globalWindZ * (float) Math.cos(angleRad);
+        float windX = globalWindX * (float) Math.cos(angleRad) - globalWindZ * (float) Math.sin(angleRad);
+        float windZ = globalWindX * (float) Math.sin(angleRad) + globalWindZ * (float) Math.cos(angleRad);
 
-        offsetX += dx * windSpeed * deltaTicks;
-        offsetZ += dz * windSpeed * deltaTicks;
+        // Apply consistent per-tick drift (no accumulation bug)
+        float velocityX = windX * windSpeed;
+        float velocityZ = windZ * windSpeed;
+
+        offsetX += velocityX * deltaTicks;
+        offsetZ += velocityZ * deltaTicks;
     }
+
 
     public void setLifetime(int ticks) {
         this.maxLifetime = ticks;
