@@ -34,6 +34,25 @@ public class StormManager {
         return storms;
     }
 
+    public static double getClosestStormY(Vec3 pos) {
+        double closestY = pos.y;
+        double nearestDistSq = Double.MAX_VALUE;
+
+        for (StormCell storm : storms) {
+            double dx = storm.getPosition().x - pos.x;
+            double dz = storm.getPosition().z - pos.z;
+            double distSq = dx * dx + dz * dz;
+
+            if (distSq < storm.getRadius() * storm.getRadius() && distSq < nearestDistSq) {
+                closestY = storm.getPosition().y;
+                nearestDistSq = distSq;
+            }
+        }
+
+        return closestY;
+    }
+
+
 
     public static boolean isPlayerInStorm(LocalPlayer player) {
         if (player == null) return false;
@@ -60,6 +79,8 @@ public class StormManager {
 
         for (StormCell storm : storms) {
             Vec3 stormPos = storm.getPosition();
+
+            // Only consider horizontal (XZ) distance
             double dx = pos.x - stormPos.x;
             double dz = pos.z - stormPos.z;
             double distSq = dx * dx + dz * dz;
@@ -80,6 +101,8 @@ public class StormManager {
 
         return 0f;
     }
+
+
 
 
     public static Vec3 getWindAt(Vec3 pos) {

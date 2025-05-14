@@ -31,42 +31,33 @@ public class StormCell {
     }
 
     public Vec3 getWindVectorAt(Vec3 pos) {
-        Vec3 stormCenter = this.position;
-        Vec3 toTarget = pos.subtract(stormCenter);
-        double dist = toTarget.length();
+        Vec3 center = this.position;
 
-        if (dist > this.radius) return Vec3.ZERO;
+        double dx = pos.x - center.x;
+        double dz = pos.z - center.z;
+        double distSq = dx * dx + dz * dz;
 
-        // Normalize distance
+        if (distSq > radius * radius) return Vec3.ZERO;
+
+        double dist = Math.sqrt(distSq);
         double t = dist / radius;
 
-        // Motion-aligned offset — pulls inflow toward the front (storm leading edge)
-        Vec3 frontBias = this.motion.normalize().scale(radius * 0.4);
-        Vec3 skewedCenter = stormCenter.add(frontBias); // inflow focus ahead of actual center
-        Vec3 toSkewed = pos.subtract(skewedCenter);
-        Vec3 inflowDir = toSkewed.normalize().scale(-1); // inward to skewed center
-
-        // Outflow lags behind — apply offset in reverse
-        Vec3 rearBias = this.motion.normalize().scale(radius * 0.4);
-        Vec3 outflowDir = pos.subtract(stormCenter.subtract(rearBias)).normalize();
-
-        // Intensity-based scaling
-        double inflowSpeed = 0.08 * intensity;
-        double updraftSpeed = 0.12 * intensity;
-        double outflowSpeed = 0.06 * intensity;
-
-        if (t > 0.6) {
-            // Inflow zone
-            return inflowDir.add(0, -0.1, 0).normalize().scale(inflowSpeed);
-        } else if (t > 0.3) {
-            // Updraft
-            return new Vec3(0, updraftSpeed, 0);
+        // Handle degenerate center
+        Vec3 radialOutward;
+        if (dist < 0.001) {
+            radialOutward = new Vec3(0, 0, 0); // no horizontal component
         } else {
-            // Outflow, biased behind storm
-            return outflowDir.add(0, -0.1, 0).normalize().scale(outflowSpeed);
+            radialOutward = new Vec3(dx, 0, dz).normalize();
         }
 
+        Vec3 vertical = new Vec3(0, -1, 0);
+        Vec3 blended = vertical.scale(1 - t).add(radialOutward.scale(t));
+
+        double speed = (0.05 + (1.0 - t) * 0.15) * intensity;
+        return blended.normalize().scale(speed);
     }
+
+
 
 
 
