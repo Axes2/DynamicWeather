@@ -14,6 +14,12 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraft.client.gui.Font;
+import net.minecraft.util.Mth;
+import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.GuiGraphics;
+
 
 
 import java.util.*;
@@ -143,6 +149,56 @@ public class LocalizedWeatherEffects {
         tessellator.end();
         RenderSystem.disableBlend();
     }
+    @SubscribeEvent
+    public static void renderStormDebugHUD(RenderGuiOverlayEvent.Pre event) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || mc.level == null) return;
+
+        Vec3 playerPos = player.position();
+        Font font = mc.font;
+        GuiGraphics guiGraphics = event.getGuiGraphics();
+        int x = 10;
+        int y = 30; // Adjusted to avoid overlap with F3 debug screen
+
+        for (StormCell storm : StormManager.getStorms()) {
+            Vec3 stormCenter = storm.getPosition();
+            Vec3 motion = storm.getMotion().normalize();
+            float radius = storm.getRadius();
+            float maxIntensity = storm.getIntensity();
+            Vec3 adjustedCenter = stormCenter.subtract(motion.scale(radius * 0.3));
+
+            double dist = playerPos.distanceTo(adjustedCenter);
+            float fade = Mth.clamp((float)(1.0 - dist / radius), 0f, 1f);
+            float rainIntensity = fade * maxIntensity;
+
+            Component[] lines = new Component[] {
+                    Component.literal("--- Storm Debug ---"),
+                    Component.literal("Player Pos: " + formatVec3(playerPos)),
+                    Component.literal("Closest Storm Center: " + formatVec3(stormCenter)),
+                    Component.literal("Adjusted Rain Center: " + formatVec3(adjustedCenter)),
+                    Component.literal("Storm Radius: " + radius),
+                    Component.literal("Distance to Adjusted Center: " + String.format("%.1f", dist)),
+                    Component.literal("Storm Intensity: " + String.format("%.2f", maxIntensity)),
+                    Component.literal("Rain Intensity: " + String.format("%.2f", rainIntensity))
+            };
+
+            for (Component line : lines) {
+                guiGraphics.drawString(font, line, x, y, 0xFFFFFF, false);
+                y += 10;
+            }
+
+            break; // Only show debug for the first (closest) storm
+        }
+    }
+
+    private static String formatVec3(Vec3 vec) {
+        return String.format("%.1f, %.1f, %.1f", vec.x, vec.y, vec.z);
+    }
+
+
+
+
 
 
 

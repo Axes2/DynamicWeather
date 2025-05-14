@@ -19,6 +19,10 @@ public class StormCell {
     private static final Random random = new Random();
     private final float intensity; // 0.0 to 1.0
 
+    public Vec3 getMotion() {
+        return this.motion;
+    }
+
 
 
     public StormCell(Vec3 position, Vec3 motion, float radius, int lifetime, float intensity) {
@@ -127,42 +131,67 @@ public class StormCell {
         int layers = 3;
         float baseY = (float) position.y;
 
+        float maxCloudSpread = radius * 1.03f; // tiny buffer for fade-out edge
+        int totalArea = (int)(Math.PI * radius * radius);
+
         for (int i = 0; i < layers; i++) {
             float y = baseY + i * 4 + random.nextFloat() * 2f;
 
-            float layerRadius = radius * (0.9f + random.nextFloat() * 0.2f); // varied radius
-            int cloudCount = (int) (radius * 0.5f) + 5 + random.nextInt(6); // fewer, less dense
+            int cloudCount = (int)(totalArea / 300f); // about 1 cloud per 300 blocks — tweak as needed
 
             for (int j = 0; j < cloudCount; j++) {
                 double angle = random.nextDouble() * Math.PI * 2;
-                double r = random.nextDouble() * layerRadius;
 
-                // Jittered center
-                float x = (float) (position.x + Math.cos(angle) * r + (random.nextFloat() - 0.5f) * 8f);
-                float z = (float) (position.z + Math.sin(angle) * r + (random.nextFloat() - 0.5f) * 8f);
+                // EVEN distribution all the way to radius
+                double r = random.nextDouble() * maxCloudSpread;
+
+                float x = (float)(position.x + Math.cos(angle) * r + (random.nextFloat() - 0.5f) * 4f);
+                float z = (float)(position.z + Math.sin(angle) * r + (random.nextFloat() - 0.5f) * 4f);
+
+                float distNorm = (float)(r / radius); // 0 to ~1
+                float tint = 0.4f + 0.3f * (1.0f - distNorm);
+                float alpha = 0.4f + 0.3f * (1.0f - distNorm);
 
                 CloudClusterInstance cluster = CloudClusterInstance.generateClusterAt(
                         CloudType.CUMULONIMBUS, x, y, z
                 );
 
                 cluster.setLifetime(this.lifetime);
-
-                // Fade edges and randomize tint
-                float dist = (float) (r / layerRadius);
-                float tint = 0.45f + 0.3f * (1.0f - dist) + (random.nextFloat() * 0.1f);
-                float alpha = 0.45f + 0.3f * (1.0f - dist);
-
-                // 🎲 Randomize size more
-                cluster.setSize(6f + random.nextFloat() * 12f); // 6–18 block cubes
-
                 cluster.setColorMultiplier(tint);
                 cluster.setOpacity(alpha);
+                cluster.setSize(8f + random.nextFloat() * 10f);
 
                 clouds.add(cluster);
                 CloudFieldManager.queueCluster(cluster);
             }
         }
+
+        // Optional outer perimeter enhancement
+        int edgeCount = (int)(radius * 0.5f);
+        float edgeY = baseY + 6f + random.nextFloat() * 2f;
+
+        for (int i = 0; i < edgeCount; i++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double r = radius * (0.95 + random.nextDouble() * 0.08); // close to max radius
+
+            float x = (float)(position.x + Math.cos(angle) * r);
+            float z = (float)(position.z + Math.sin(angle) * r);
+
+            CloudClusterInstance edge = CloudClusterInstance.generateClusterAt(
+                    CloudType.CUMULONIMBUS, x, edgeY, z
+            );
+            edge.setLifetime(this.lifetime);
+            edge.setOpacity(0.3f + random.nextFloat() * 0.1f);
+            edge.setColorMultiplier(0.35f + random.nextFloat() * 0.1f);
+            edge.setSize(10f + random.nextFloat() * 8f);
+
+            clouds.add(edge);
+            CloudFieldManager.queueCluster(edge);
+        }
+
     }
+
+
 
 
 

@@ -90,6 +90,9 @@ public class StormManager {
                 nearest = storm;
                 nearestDistSq = distSq;
             }
+            //System.out.println("Player pos: " + pos + " vs storm center: " + storm.getPosition() + ", dist: " + Math.sqrt(distSq) + ", radius: " + storm.getRadius());
+
+
         }
 
         if (nearest != null) {
