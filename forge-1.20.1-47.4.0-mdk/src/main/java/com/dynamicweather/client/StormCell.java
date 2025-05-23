@@ -116,9 +116,9 @@ public class StormCell {
         this.lifetime--;
 
         for (CloudClusterInstance cloud : clouds) {
-            cloud.applyMotion((float) motion.x, (float) motion.z);
-            cloud.tickLifetime(); // ensure fade-out works
+            cloud.tickLifetime(); // just age them
         }
+
         CloudFieldManager.flushPendingClusters();
 
     }

@@ -164,11 +164,10 @@ public class LocalizedWeatherEffects {
         for (StormCell storm : StormManager.getStorms()) {
             Vec3 stormCenter = storm.getPosition();
             Vec3 motion = storm.getMotion().normalize();
+            double dist = playerPos.distanceTo(stormCenter);
             float radius = storm.getRadius();
             float maxIntensity = storm.getIntensity();
-            Vec3 adjustedCenter = stormCenter.subtract(motion.scale(radius * 0.3));
 
-            double dist = playerPos.distanceTo(adjustedCenter);
             float fade = Mth.clamp((float)(1.0 - dist / radius), 0f, 1f);
             float rainIntensity = fade * maxIntensity;
 
@@ -176,9 +175,7 @@ public class LocalizedWeatherEffects {
                     Component.literal("--- Storm Debug ---"),
                     Component.literal("Player Pos: " + formatVec3(playerPos)),
                     Component.literal("Closest Storm Center: " + formatVec3(stormCenter)),
-                    Component.literal("Adjusted Rain Center: " + formatVec3(adjustedCenter)),
                     Component.literal("Storm Radius: " + radius),
-                    Component.literal("Distance to Adjusted Center: " + String.format("%.1f", dist)),
                     Component.literal("Storm Intensity: " + String.format("%.2f", maxIntensity)),
                     Component.literal("Rain Intensity: " + String.format("%.2f", rainIntensity))
             };
